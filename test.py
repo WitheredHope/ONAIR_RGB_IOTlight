@@ -1,18 +1,41 @@
 #!/usr/bin/env python3
 
+# The MIT License (MIT)
+#
+# Copyright (c) 2013-2017 Benedikt Schmitt <benedikt@benediktschmitt.de>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+# Modules
+# ------------------------------------------------
+from pprint import pprint
 import ts3
 
 
-# Telnet or SSH ?
-URI = "ssh://serveradmin:T+cXQB04@localhost:10022"
-
-SID = 1
-
-
+# Data
+# ------------------------------------------------
 __all__ = ["ChannelTreeNode",
            "view"]
 
 
+# Classes
+# ------------------------------------------------
 class ChannelTreeNode(object):
     """
     Represents a channel or the virtual server in the channel tree of a virtual
@@ -110,12 +133,16 @@ class ChannelTreeNode(object):
         Returns the channel tree from the virtual server identified with
         *sid*, using the *TS3Connection* ts3conn.
         """
-        ts3conn.exec_("use", sid=sid, virtual=True)
+        ts3conn.use(sid=sid, virtual=True)
 
-        serverinfo = ts3conn.query("serverinfo").first()
-        channellist = ts3conn.query("channellist").all()
-        clientlist = ts3conn.query("clientlist").all()
+        resp = ts3conn.serverinfo()
+        serverinfo = resp.parsed[0]
 
+        resp = ts3conn.channellist()
+        channellist = resp.parsed
+
+        resp = ts3conn.clientlist()
+        clientlist = resp.parsed
         # channel id -> clients
         clientlist = {cid: [client for client in clientlist \
                             if client["cid"] == cid]
@@ -123,8 +150,8 @@ class ChannelTreeNode(object):
 
         root = cls.init_root(serverinfo)
         for channel in channellist:
-            channelinfo = ts3conn.query("channelinfo", cid=channel["cid"]).first()
-
+            resp = ts3conn.channelinfo(cid=channel["cid"])
+            channelinfo = resp.parsed[0]
             # This makes sure, that *cid* is in the dictionary.
             channelinfo.update(channel)
 
@@ -204,7 +231,12 @@ def view(ts3conn, sid=1):
     return None
 
 
+# Main
+# ------------------------------------------------
 if __name__ == "__main__":
-    with ts3.query.TS3ServerConnection(URI) as ts3conn:
-        ts3conn.exec_("use", sid=SID)
+    # USER, PASS, HOST, ...
+    from def_param import *
+
+    with ts3.query.TS3ServerConnection(HOST, PORT) as ts3conn:
+        ts3conn.login(client_login_name=USER, client_login_password=PASS)
         view(ts3conn, sid=1)
