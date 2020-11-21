@@ -1,0 +1,5 @@
+Programatically define client ID
+Add multiple ts server support
+Add discord support
+Properly handle dependencies
+Proper structure, look at ts3 package examples
