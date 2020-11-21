@@ -1,14 +1,24 @@
 import ts3
 
-def getUserStatus():
+def getClientStatus(clid):
     """
     Gets the given users status for:
 
     Speakers / Headphones - 
     Microphone -
     Away -
+    Recording
     """
-    pass
+    resp = ts3conn.clientinfo(clid=clid)
+    clientInfo = resp.parsed[0]
+    clientStatus = {
+        "nickname" : clientInfo.get("client_nickname"),
+        "micMuted" : bool(clientInfo.get("client_input_muted")),
+        "speakerMuted" : bool(clientInfo.get("client_output_muted")),
+        "recording" : bool(clientInfo.get("client_is_recording")),
+        "away" : bool(clientInfo.get("client_away"))
+    }
+    return(clientStatus)
 
 
 if __name__ == "__main__":
@@ -20,15 +30,8 @@ if __name__ == "__main__":
         ts3conn.use(sid=SID, virtual=True)
         resp = ts3conn.clientlist()
         clientList = resp.parsed
-        #print(clientList)
-        resp = ts3conn.clientinfo(clid=1046)
-        clientInfo = resp.parsed[0]
-        print("Client Nickname = "        + clientInfo.get("client_nickname"))
-        print("Client Output Hardware = " + clientInfo.get("client_output_hardware"))
-        print("Client Input Hardware = "  + clientInfo.get("client_input_hardware"))
-        print("Client Recording = "       + clientInfo.get("client_is_recording"))
-        print("Client Away = "            + clientInfo.get("client_away"))
-        print("Client Is Talker = "       + clientInfo.get("client_is_talker"))
+        print(clientList)
+        print(getClientStatus(1))
         
 
 
